@@ -1,9 +1,5 @@
 import styled from "styled-components";
 
-const error = {
-  "auth/email-already-in-use" : "That email already exists.",
-  "auth/weak-password" : "That password not same."
-}
 
 export const Wrapper = styled.div`
   height : 100%;
