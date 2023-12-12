@@ -27,14 +27,13 @@ const MenuItem = styled.div`
   border: 2px solid white;
   height: 50px;
   width: 50px;
-  border-radius: 250%;
-  svg{
+  border-radius: 50%;
+  svg {
     width: 30px;
     fill: white;
   }
-
   &.log-out {
-    border-color:tomato;
+    border-color: tomato;
     svg {
       fill: tomato;
     }

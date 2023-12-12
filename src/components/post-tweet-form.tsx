@@ -21,7 +21,6 @@ const TextArea = styled.textarea`
   resize: none;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
-
   &::placeholder {
     font-size: 16px;
   }
@@ -92,7 +91,7 @@ export default function PostTweetForm() {
       if (file) {
         const locationRef = ref(
           storage,
-          `tweets/${user.uid}-${user.displayName}/${doc.id}`
+          `tweets/${user.uid}/${doc.id}`
         );
         const result = await uploadBytes(locationRef, file);
         const url = await getDownloadURL(result.ref);
