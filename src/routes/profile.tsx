@@ -1,7 +1,8 @@
 import styled from "styled-components";
 import { auth, db, storage } from "../firebase";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { updateProfile } from "firebase/auth";
 import {
   collection,
   getDocs,
@@ -10,123 +11,168 @@ import {
   query,
   where,
 } from "firebase/firestore";
-import { ITweet } from "../components/timeline";
 import Tweet from "../components/tweet";
-import EditProfile from "../components/edit-profile";
+import { ITweet } from "../components/timeline";
+import { Error } from "../components/auth-components";
 
 const Wrapper = styled.div`
   display: flex;
   align-items: center;
   flex-direction: column;
   gap: 20px;
+  padding: 30px 0 0 0;
+  height: 100vh;
+  @media only screen and (max-width: 500px) {
+    padding: 20px 15px 0 15px;
+  }
 `;
-
 const AvatarUpload = styled.label`
   width: 80px;
-  overflow: hidden;
-  height: 80px;
+  height: 150px;
   border-radius: 50%;
   background-color: #1d9bf0;
-  display: flex;
-  align-items: center;
+  overflow: hidden;
   cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   svg {
     width: 50px;
     height: 50px;
   }
 `;
-
-const AvatarImg = styled.img`
+const AvatarImage = styled.img`
   width: 100%;
+  height: 100%;
 `;
-
 const AvatarInput = styled.input`
   display: none;
 `;
-
-const NameGroup = styled.div`
-  display: flex;
-  flex-direction: row;
-  gap: 10px;
-  align-items: center;
-`;
-
 const Name = styled.span`
   font-size: 22px;
 `;
-
-const EditButton = styled.label`
-  width: 22px;
-`;
-
 const Tweets = styled.div`
-  display: flex;
   width: 100%;
+  display: flex;
   flex-direction: column;
   gap: 10px;
+  overflow-y: scroll;
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+  
+  &::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+  }
+`;
+const EditNameTextField = styled.textarea`
+  border: 2px solid white;
+  padding: 12px;
+  border-radius: 20px;
+  font-size: 16px;
+  color: white;
+  background-color: black;
+  text-align: center;
+  width: 50%;
+  height: 70px;
+  resize: none;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  &::placeholder {
+    font-size: 16px;
+  }
+  &:focus {
+    outline: none;
+    border-color: #1d9bf0;
+  }
+`;
+const EditNameButton = styled.button`
+  background-color: #1d9bf0;
+  color: white;
+  font-weight: 600;
+  border: 0;
+  font-size: 12px;
+  padding: 5px 10px;
+  text-transform: uppercase;
+  border-radius: 5px;
+  cursor: pointer;
 `;
 
-function Profile() {
+export default function Profile() {
   const user = auth.currentUser;
-  const photoURL = user
-    ? user.photoURL
-      ? user.photoURL
-      : undefined
-    : undefined;
-  const [avatar, setAvatar] = useState(photoURL);
-  const [myTweets, setMyTweets] = useState<ITweet[]>([]);
-  const [isEdit, setIsEdit] = useState(false);
-  const onAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { files } = e.target;
-    if (!user) return;
-    if (files && files.length === 1) {
-      const file = files[0];
-      const locationRef = ref(storage, `avatars/${user?.uid}`);
-      const result = await uploadBytes(locationRef, file);
-      const url = await getDownloadURL(result.ref);
-      setAvatar(url);
-      // I will not update my Profile.
-      // await updateProfile(user, {
-      //   photoURL: url,
-      // })
-    }
-  };
+  const [avatar, setAvatar] = useState(user?.photoURL);
+  const [tweets, setTweets] = useState<ITweet[]>([]);
+  const [newName, setNewName] = useState("");
+  const [isEdit, setEditing] = useState(false);
+  const [errorEditName, setErrorEditName] = useState("");
 
+  const onChangeAvatar = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!user) {
+      return;
+    }
+    const { files } = e.target;
+    if (!files || files.length !== 1) {
+      return;
+    }
+    const file = files[0];
+    const locationRef = ref(storage, `avatars/${user.uid}`);
+    const result = await uploadBytes(locationRef, file);
+    const avatarUrl = await getDownloadURL(result.ref);
+    setAvatar(avatarUrl);
+    await updateProfile(user, {
+      photoURL: avatarUrl,
+    });
+  };
   const fetchTweets = async () => {
-    const tweetQuery = await query(
+    if (!user) {
+      return;
+    }
+    const tweetsQuery = query(
       collection(db, "tweets"),
-      where("userId", "==", user?.uid),
+      where("userId", "==", user.uid),
       orderBy("createdAt", "desc"),
       limit(25)
     );
-    const snapshot = await getDocs(tweetQuery);
+    const snapshot = await getDocs(tweetsQuery);
     const tweets = snapshot.docs.map((doc) => {
-      const { tweet, createdAt, userId, userName, photo } = doc.data();
-      return {
-        id: doc.id,
-        tweet,
-        createdAt,
-        userId,
-        userName,
-        photo,
-      };
+      const { tweet, createdAt, userId, username, photo } = doc.data();
+      return { tweet, createdAt, userId, username, photo, id: doc.id };
     });
-    setMyTweets(tweets);
+    setTweets(tweets);
   };
-
-  const onClickEdit = () => {
-    setIsEdit(true);
+  const onClickEditName = () => {
+    setEditing(true);
   };
-
+  const onClickApplyName = async () => {
+    setErrorEditName("");
+    if (!user) {
+      return;
+    }
+    if (newName === "") {
+      setErrorEditName("Can't change to empty name.");
+      return;
+    }
+    await updateProfile(user, {
+      displayName: newName,
+    });
+    setEditing(false);
+  };
+  const onChangeEditNameField = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const {
+      target: { value },
+    } = e;
+    setNewName(value);
+  };
   useEffect(() => {
     fetchTweets();
+    if (user && user.displayName) {
+      setNewName(user.displayName);
+    }
   }, []);
-
   return (
     <Wrapper>
       <AvatarUpload htmlFor="avatar">
-        {Boolean(avatar) ? (
-          <AvatarImg src={avatar} />
+        {avatar ? (
+          <AvatarImage src={avatar} />
         ) : (
           <svg
             fill="currentColor"
@@ -134,45 +180,33 @@ function Profile() {
             xmlns="http://www.w3.org/2000/svg"
             aria-hidden="true"
           >
-            <path d="M10 8a3 3 0 100-6 3 3 0 000 6zM3.465 14.493a1.23 1.23 0 00.41 1.412A9.957 9.957 0 0010 18c2.31 0 4.438-.784 6.131-2.1.43-.333.604-.903.408-1.41a7.002 7.002 0 00-13.074.003z" />
+            <path d="M10 8a3 3 0 100-6 3 3 0 000 6zM3.465 14.493a1.23 1.23 0 00.41 1.412A9.957 9.957 0 0010 18c2.31 0 4.438-.784 6.131-2.1.43-.333.604-.903.408-1.41a7.002 7.002 0 00-13.074.003z"></path>
           </svg>
         )}
       </AvatarUpload>
       <AvatarInput
-        onChange={onAvatarChange}
+        onChange={onChangeAvatar}
         id="avatar"
         type="file"
         accept="image/*"
       />
-      <NameGroup>
-        <Name>{user?.displayName ?? "Anonymous"}</Name>
-        <EditButton onClick={onClickEdit}>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            className="w-6 h-6"
-          >
-            <path d="M21.731 2.269a2.625 2.625 0 00-3.712 0l-1.157 1.157 3.712 3.712 1.157-1.157a2.625 2.625 0 000-3.712zM19.513 8.199l-3.712-3.712-8.4 8.4a5.25 5.25 0 00-1.32 2.214l-.8 2.685a.75.75 0 00.933.933l2.685-.8a5.25 5.25 0 002.214-1.32l8.4-8.4z" />
-            <path d="M5.25 5.25a3 3 0 00-3 3v10.5a3 3 0 003 3h10.5a3 3 0 003-3V13.5a.75.75 0 00-1.5 0v5.25a1.5 1.5 0 01-1.5 1.5H5.25a1.5 1.5 0 01-1.5-1.5V8.25a1.5 1.5 0 011.5-1.5h5.25a.75.75 0 000-1.5H5.25z" />
-          </svg>
-        </EditButton>
-      </NameGroup>
+      {isEdit ? (
+        <>
+          <EditNameTextField onChange={onChangeEditNameField} value={newName} />
+          <EditNameButton onClick={onClickApplyName}>Apply</EditNameButton>
+          {errorEditName !== "" ? <Error>{errorEditName}</Error> : null}
+        </>
+      ) : (
+        <>
+          <Name>{user?.displayName ?? "Anonymous"}</Name>
+          <EditNameButton onClick={onClickEditName}>Edit</EditNameButton>
+        </>
+      )}
       <Tweets>
-        {myTweets.map((tweet) => (
+        {tweets.map((tweet) => (
           <Tweet key={tweet.id} {...tweet} />
         ))}
       </Tweets>
-      {isEdit && (
-        <EditProfile
-          user={user}
-          onClose={() => {
-            setIsEdit(false);
-          }}
-        />
-      )}
     </Wrapper>
   );
 }
-
-export default Profile;

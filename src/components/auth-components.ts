@@ -1,13 +1,12 @@
-import styled from "styled-components";
-
+import { styled } from "styled-components";
 
 export const Wrapper = styled.div`
-  height : 100%;
-  display : flex;
+  height: 100%;
+  display: flex;
   flex-direction: column;
   align-items: center;
   width: 420px;
-  padding: 50px 0;
+  padding: 50px 0px;
 `;
 
 export const Title = styled.h1`
@@ -21,6 +20,7 @@ export const Form = styled.form`
   flex-direction: column;
   gap: 10px;
   width: 100%;
+  
 `;
 
 export const Input = styled.input`
@@ -29,29 +29,19 @@ export const Input = styled.input`
   border: none;
   width: 100%;
   font-size: 16px;
-
-  &[type="submit"]{
+  &[type="submit"] {
     cursor: pointer;
-    &:hover{
+    background-color: #1d9bf0;
+    color: white;
+    &:hover {
       opacity: 0.8;
     }
   }
-
-  
+  @media only screen and (max-width: 500px) {
+    width: 80vw;
+    margin: 0 auto;
+  }
 `;
-
-export const ForgotButton = styled(Input)`
-  background-color: black;
-  color: white;
-  border: 1px solid gray;
-  text-align: center;
-`;
-
-export const SubmitButton = styled(Input)`
-  background-color: rgb(29, 155, 240);
-  color: white;
-`;
-
 
 export const Error = styled.span`
   font-weight: 600;
@@ -60,7 +50,7 @@ export const Error = styled.span`
 
 export const Switcher = styled.span`
   margin-top: 20px;
-  a{
+  a {
     color: #1d9bf0;
   }
 `;

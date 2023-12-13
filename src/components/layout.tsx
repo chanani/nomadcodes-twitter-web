@@ -1,22 +1,42 @@
 import { Link, Outlet, useNavigate } from "react-router-dom";
-import styled from "styled-components";
+import { styled } from "styled-components";
 import { auth } from "../firebase";
+import { useState } from "react";
 
 const Wrapper = styled.div`
-  display: grid;
   gap: 20px;
   grid-template-columns: 1fr 4fr;
   height: 100%;
-  padding: 50px 0px;
+  padding: 0 50px;
   width: 100%;
   max-width: 860px;
+  @media only screen and (max-width: 500px) {
+    padding: 0 0 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    overflow-y: scroll;
+  }
 `;
 
 const Menu = styled.div`
+  position: absolute;
+  z-index: 1;
+  background-color: #383737f0;
   display: flex;
+  gap: 10px;
   flex-direction: column;
-  align-items: center;
-  gap: 20px;
+  border: 1px solid #777;
+  padding: 10px;
+  border-radius: 10px;
+  @media only screen and (max-width: 500px) {
+    display: flex;
+    right: 0;
+    bottom: 65px;
+    right: 10px;
+  }
+  @media only screen and (min-width: 500px) {
+    top: 70px;
+  }
 `;
 
 const MenuItem = styled.div`
@@ -28,6 +48,7 @@ const MenuItem = styled.div`
   height: 50px;
   width: 50px;
   border-radius: 50%;
+
   svg {
     width: 30px;
     fill: white;
@@ -40,64 +61,118 @@ const MenuItem = styled.div`
   }
 `;
 
-export default function Layout(){
+const ToggleBtn = styled.div`
+  width: 45px;
+  height: 45px;
+  position: absolute;
+  border-radius: 10px;
+  background-color: #c9c8c82b;
+  border : none;
+  z-index: 2;
+  svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  &:hover {
+    border: 1px solid #777;
+  }
+
+  @media only screen and (max-width: 500px) {
+    bottom: 10px;
+    right: 10px;
+  }
+  @media only screen and (min-width: 500px) {
+    top: 15px;
+
+  }
+`;
+
+export default function Layout() {
   const navigate = useNavigate();
-  const onLogOut = async() => {
+  const [menuToggle, setMenuToggle] = useState(false);
+  const onLogOut = async () => {
     const ok = confirm("Are you sure you want to log out?");
-    if(ok){
+    if (ok) {
       await auth.signOut();
       navigate("/login");
     }
-  }
+  };
+
+  const onToggle = () => {
+    setMenuToggle(!menuToggle);
+    console.log(1);
+  };
+
   return (
     <Wrapper>
-      <Menu>
-       <Link to="/">
-       <MenuItem>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            className="w-6 h-6"
-          >
-            <path d="M11.47 3.84a.75.75 0 011.06 0l8.69 8.69a.75.75 0 101.06-1.06l-8.689-8.69a2.25 2.25 0 00-3.182 0l-8.69 8.69a.75.75 0 001.061 1.06l8.69-8.69z" />
-            <path d="M12 5.432l8.159 8.159c.03.03.06.058.091.086v6.198c0 1.035-.84 1.875-1.875 1.875H15a.75.75 0 01-.75-.75v-4.5a.75.75 0 00-.75-.75h-3a.75.75 0 00-.75.75V21a.75.75 0 01-.75.75H5.625a1.875 1.875 0 01-1.875-1.875v-6.198a2.29 2.29 0 00.091-.086L12 5.43z" />
-          </svg>
-        </MenuItem>
-       </Link>
-       <Link to="/profile">
-       <MenuItem>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            className="w-6 h-6"
-          >
-            <path
-              fillRule="evenodd"
-              d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z"
-              clipRule="evenodd"
-            />
-          </svg>
-        </MenuItem>
-       </Link>
+      <ToggleBtn onClick={onToggle}>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16"
+          height="16"
+          fill="currentColor"
+          className="bi bi-list"
+          viewBox="0 0 16 16"
+        >
+          <path
+            fillRule="evenodd"
+            d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5"
+          />
+        </svg>
+      </ToggleBtn>
+      {menuToggle ? (
+        <Menu>
+          <Link to="/">
+            <MenuItem>
+              <svg
+                fill="currentColor"
+                viewBox="0 0 20 20"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+              >
+                <path
+                  clipRule="evenodd"
+                  fillRule="evenodd"
+                  d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z"
+                />
+              </svg>
+            </MenuItem>
+          </Link>
+          <Link to="/profile">
+            <MenuItem>
+              <svg
+                fill="currentColor"
+                viewBox="0 0 20 20"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+              >
+                <path d="M10 8a3 3 0 100-6 3 3 0 000 6zM3.465 14.493a1.23 1.23 0 00.41 1.412A9.957 9.957 0 0010 18c2.31 0 4.438-.784 6.131-2.1.43-.333.604-.903.408-1.41a7.002 7.002 0 00-13.074.003z" />
+              </svg>
+            </MenuItem>
+          </Link>
+          <MenuItem onClick={onLogOut} className="log-out">
+            <svg
+              fill="currentColor"
+              viewBox="0 0 20 20"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <path
+                clipRule="evenodd"
+                fillRule="evenodd"
+                d="M3 4.25A2.25 2.25 0 015.25 2h5.5A2.25 2.25 0 0113 4.25v2a.75.75 0 01-1.5 0v-2a.75.75 0 00-.75-.75h-5.5a.75.75 0 00-.75.75v11.5c0 .414.336.75.75.75h5.5a.75.75 0 00.75-.75v-2a.75.75 0 011.5 0v2A2.25 2.25 0 0110.75 18h-5.5A2.25 2.25 0 013 15.75V4.25z"
+              />
+              <path
+                clipRule="evenodd"
+                fillRule="evenodd"
+                d="M19 10a.75.75 0 00-.75-.75H8.704l1.048-.943a.75.75 0 10-1.004-1.114l-2.5 2.25a.75.75 0 000 1.114l2.5 2.25a.75.75 0 101.004-1.114l-1.048-.943h9.546A.75.75 0 0019 10z"
+              />
+            </svg>
+          </MenuItem>
+        </Menu>
+      ) : null}
 
-       <MenuItem className="log-out" onClick={onLogOut}>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            className="w-6 h-6"
-          >
-            <path
-              fillRule="evenodd"
-              d="M7.5 3.75A1.5 1.5 0 006 5.25v13.5a1.5 1.5 0 001.5 1.5h6a1.5 1.5 0 001.5-1.5V15a.75.75 0 011.5 0v3.75a3 3 0 01-3 3h-6a3 3 0 01-3-3V5.25a3 3 0 013-3h6a3 3 0 013 3V9A.75.75 0 0115 9V5.25a1.5 1.5 0 00-1.5-1.5h-6zm5.03 4.72a.75.75 0 010 1.06l-1.72 1.72h10.94a.75.75 0 010 1.5H10.81l1.72 1.72a.75.75 0 11-1.06 1.06l-3-3a.75.75 0 010-1.06l3-3a.75.75 0 011.06 0z"
-              clipRule="evenodd"
-            />
-          </svg>
-        </MenuItem>
-
-      </Menu>
       <Outlet />
     </Wrapper>
   );

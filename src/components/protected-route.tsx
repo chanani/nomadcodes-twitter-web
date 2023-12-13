@@ -4,14 +4,11 @@ import { auth } from "../firebase";
 export default function ProtectedRoute({
   children,
 }: {
-  children : React.ReactNode;
-}){
-  
-  // 로그인 여부를 알려줌 
+  children: React.ReactNode;
+}) {
   const user = auth.currentUser;
-  if(user === null){
-    return <Navigate to="/login"/>
+  if (user === null) {
+    return <Navigate to="/login" />;
   }
-
   return children;
 }

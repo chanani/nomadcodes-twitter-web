@@ -1,21 +1,27 @@
 import { GithubAuthProvider, signInWithPopup } from "firebase/auth";
-import styled from "styled-components";
+import { styled } from "styled-components";
 import { auth } from "../firebase";
 import { useNavigate } from "react-router-dom";
 
 const Button = styled.span`
-margin-top: 50px;
+  margin-top: 50px;
   background-color: white;
   font-weight: 500;
   width: 100%;
   color: black;
   padding: 10px 20px;
   border-radius: 50px;
-  border:  0;
+  border: 0;
   display: flex;
   gap: 5px;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
+  @media only screen and (max-width: 500px) {
+    width: 80vw;
+    margin: 0 auto;
+    margin-top: 30px;
+  }
 `;
 
 const Logo = styled.img`
@@ -29,9 +35,8 @@ export default function GithubButton() {
       const provider = new GithubAuthProvider();
       await signInWithPopup(auth, provider);
       navigate("/");
-      // await signInWithRedirect(auth, provider);
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   };
   return (
